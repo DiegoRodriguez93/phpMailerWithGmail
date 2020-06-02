@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Renoca Spam</title>
+</head>
+<body>
+
+    <div id="correosEnviados"></div>
+    <label for="pass">Contraseña para iniciar</label>
+    <input type="password" id="pass">
+
+    <button onclick="iniciarSpam()">Iniciar Spam</button>
+
+    <div id="enviando"></div>
+
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script>
+
+        var enviando = 0;
+
+        function iniciarSpam(){
+
+            $pass = $('#pass').val();
+
+            if($pass.length < 6){
+                alert('Contraseña inválida!');
+                return false;
+            }
+
+            $.ajax({
+                type: "POST",
+                url: "devolverCorreos.php",
+                data: {pass:$pass},
+                dataType: "JSON",
+                async: false,
+                beforeSend:()=>{ $('#enviando').html('enviando....'); },
+                success: function (data) {
+
+                    $pass = $('#pass').val();
+
+                    $.each(data, function (i, val) { 
+                         let seguir;
+                        $.ajax({
+                            type: "POST",
+                            url: "sendMail.php",
+                            data: {email:val.email, name:val.name},
+                            async: false,
+                            dataType: "JSON",
+                            success: function (res) {
+                                if(res.result){
+                                    seguir = true;
+                                    $email = res.email;
+                                    $name = res.name;
+                                    $('<p style="color:green">envio a '+$email+' con el nombre '+$name+' correcto!</p><br> ').appendTo('#correosEnviados');
+                                    enviando = enviando + 1;
+                                    $('#enviando').append(' '+enviando);
+                                }else{
+                                    seguir = false;
+                                    $('<p style="color:red">Ha ocurrido un error!</p><br> ').appendTo('#correosEnviados');
+                                }
+                            },error: () => {seguir = false}
+                        });
+
+                        if(seguir){
+                          /*   $('#correosEnviados').appendTo('<p style="color:green">envio a '+email+'con el nombre '+name+'correco!</p><br> '); */
+                            
+                        }else{
+                           
+                        }
+
+                    });
+                    
+                }
+            });
+
+
+
+        }
+
+
+    </script>
+</body>
+</html>
